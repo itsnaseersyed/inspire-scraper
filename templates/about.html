@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}About - INSPIRE Scraper{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <h1>About the Project</h1>
+        <p class="lead">
+            The INSPIRE Contact Details Scraper is an open-source initiative designed to democratize access to public
+            educational data.
+        </p>
+
+        <hr style="border: 0; border-top: 1px solid var(--border); margin: 2rem 0;">
+
+        <h2>Technical Architecture</h2>
+        <p>
+            Built using <strong>Python</strong> and <strong>Flask</strong>, the application leverages:
+        </p>
+        <ul style="padding-left: 1.5rem; margin-bottom: 2rem; color: var(--text-muted);">
+            <li><strong>BeautifulSoup4</strong> for HTML parsing</li>
+            <li><strong>Requests</strong> for efficient HTTP sessions</li>
+            <li><strong>Pandas</strong> for structured data manipulation and CSV export</li>
+            <li><strong>Vanilla JS</strong> for a lightweight, responsive frontend</li>
+        </ul>
+
+        <h2>Disclaimer</h2>
+        <p>
+            This tool is intended for educational and research purposes only. Users are responsible for ensuring
+            compliance with all applicable laws and website terms of service when using this software.
+        </p>
+
+        <div style="margin-top: 2rem;">
+            <a href="https://github.com" target="_blank" class="btn btn-outline"
+                style="width: 100%; justify-content: center;">
+                <i class="fab fa-github" style="margin-right: 0.5rem;"></i>
+                View Source Code
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

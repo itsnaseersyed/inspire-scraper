@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Home - INSPIRE Scraper{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Data Extraction Made Simple</h1>
+    <p>
+        A powerful, open-source tool designed to streamline the process of collecting school contact information from
+        the INSPIRE Awards database.
+    </p>
+
+    <div class="hero = actions">
+        <a href="/scraper" class="btn btn-primary">
+            <i class="fas fa-rocket" style="margin-right: 0.5rem;"></i>
+            Start Scraping
+        </a>
+        <a href="/docs" class="btn btn-outline">
+            Learn More
+        </a>
+    </div>
+</div>
+
+<div class="container" style="margin-top: 4rem;">
+    <div class="status-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="status-item" style="text-align: center;">
+            <i class="fas fa-bolt" style="font-size: 2rem; color: var(--text-main); margin-bottom: 1rem;"></i>
+            <h3>Fast & Efficient</h3>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Optimized for speed with smart caching and retry logic.
+            </p>
+        </div>
+        <div class="status-item" style="text-align: center;">
+            <i class="fas fa-file-csv" style="font-size: 2rem; color: var(--text-main); margin-bottom: 1rem;"></i>
+            <h3>Structured Data</h3>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Export clean, organized CSV files ready for analysis.</p>
+        </div>
+        <div class="status-item" style="text-align: center;">
+            <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--text-main); margin-bottom: 1rem;"></i>
+            <h3>Reliable</h3>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Built with robust error handling for uninterrupted
+                sessions.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

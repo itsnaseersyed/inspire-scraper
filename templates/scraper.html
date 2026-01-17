@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - INSPIRE Scraper{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div style="margin-bottom: 2rem;">
+            <h2 style="margin-bottom: 0.5rem;">Configuration</h2>
+            <p style="margin-bottom: 0;">Select your target location to begin extraction.</p>
+        </div>
+
+        <div class="form-group">
+            <label for="stateSelect">Target State</label>
+            <select id="stateSelect">
+                <option value="">Select a State represents...</option>
+                {% for state_id, state_name in states.items() %}
+                <option value="{{ state_id }}">{{ state_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div id="districtSection" class="form-group" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <label style="margin-bottom: 0;">Target Districts</label>
+                <label
+                    style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer; color: var(--accent);">
+                    <input type="checkbox" id="selectAllDistricts">
+                    Select All
+                </label>
+            </div>
+
+            <div id="districtList" class="checkbox-list">
+                <!-- Districts will be populated here -->
+                <div style="padding: 1rem; text-align: center; color: var(--text-muted);">
+                    Loading districts...
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-actions" style="margin-top: 2rem; justify-content: flex-start;">
+            <button id="startBtn" class="btn btn-primary" onclick="startScraping()" disabled>
+                <i class="fas fa-play" style="margin-right: 0.5rem;"></i> Start Extraction
+            </button>
+            <button id="stopBtn" class="btn btn-outline" style="border-color: var(--error); color: var(--error);"
+                onclick="stopScraping()" disabled>
+                <i class="fas fa-stop" style="margin-right: 0.5rem;"></i> Stop
+            </button>
+        </div>
+    </div>
+
+    <!-- Status Panel -->
+    <div id="statusPanel" class="card" style="margin-top: 2rem; display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin-bottom: 0;">Live Status</h2>
+            <span id="mainStatusLabel" class="status-value"
+                style="font-size: 0.9rem; color: var(--accent);">Processing</span>
+        </div>
+
+        <div class="status-grid">
+            <div class="status-item">
+                <div class="status-label">Total Records Available</div>
+                <div id="totalAvailable" class="status-value">0</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Records Extracted</div>
+                <div id="totalRecords" class="status-value">0</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">District</div>
+                <div id="currentDistrict" class="status-value">-</div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">School</div>
+                <div id="currentSchool" class="status-value">-</div>
+            </div>
+        </div>
+
+        <div class="progress-container">
+            <div id="progressFill" class="progress-bar"></div>
+        </div>
+        <div style="text-align: right; font-size: 0.85rem; color: var(--text-muted); margin-top: -0.5rem;">
+            <span id="progressText">0%</span>
+        </div>
+
+        <div id="downloadSection" style="text-align: center; margin-top: 2rem; display: none;">
+            <a href="/api/download" class="btn btn-primary" style="background-color: var(--success);">
+                <i class="fas fa-download" style="margin-right: 0.5rem;"></i> Download Result
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let statusInterval = null;
+
+    // State Selection
+    document.getElementById('stateSelect').addEventListener('change', function () {
+        const stateId = this.value;
+        if (stateId) {
+            loadDistricts(stateId);
+        } else {
+            document.getElementById('districtSection').style.display = 'none';
+            document.getElementById('startBtn').disabled = true;
+        }
+    });
+
+    function loadDistricts(stateId) {
+        const list = document.getElementById('districtList');
+        list.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-muted);">Fetching districts...</div>';
+        document.getElementById('districtSection').style.display = 'block';
+
+        fetch(`/api/districts/${stateId}`)
+            .then(res => res.json())
+            .then(districts => {
+                list.innerHTML = '';
+                Object.entries(districts).forEach(([id, name]) => {
+                    const item = document.createElement('label');
+                    item.className = 'checkbox-item';
+                    item.innerHTML = `
+                        <input type="checkbox" class="district-checkbox" value="${id}">
+                        <span>${name}</span>
+                    `;
+                    item.querySelector('input').onchange = updateStartButton;
+                    list.appendChild(item);
+                });
+
+                // Select All Logic
+                if (Object.keys(districts).length > 0) {
+                    const selectAll = document.getElementById('selectAllDistricts');
+                    selectAll.checked = false;
+                    selectAll.onchange = function () {
+                        document.querySelectorAll('.district-checkbox').forEach(cb => {
+                            cb.checked = this.checked;
+                        });
+                        updateStartButton();
+                    };
+                }
+            })
+            .catch(err => {
+                list.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--error);">Failed to load districts</div>';
+            });
+    }
+
+    function updateStartButton() {
+        const count = document.querySelectorAll('.district-checkbox:checked').length;
+        document.getElementById('startBtn').disabled = count === 0;
+
+        // Update Select All Checkbox UI
+        const all = document.querySelectorAll('.district-checkbox');
+        const selectAll = document.getElementById('selectAllDistricts');
+        if (all.length > 0) {
+            selectAll.checked = count === all.length;
+        }
+    }
+
+    function startScraping() {
+        const stateId = document.getElementById('stateSelect').value;
+        const checked = document.querySelectorAll('.district-checkbox:checked');
+        const districts = Array.from(checked).map(cb => cb.value);
+        const allCount = document.querySelectorAll('.district-checkbox').length;
+
+        // If all selected, send 'all'
+        const payloadIds = (districts.length === allCount) ? ['all'] : districts;
+
+        // UI Updates
+        document.getElementById('statusPanel').style.display = 'block';
+        document.getElementById('statusPanel').scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        document.getElementById('downloadSection').style.display = 'none';
+
+        fetch('/api/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ state_id: stateId, districts: payloadIds })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (statusInterval) clearInterval(statusInterval);
+                    statusInterval = setInterval(updateStatus, 1000);
+                } else {
+                    alert('Error: ' + data.error);
+                    resetUI();
+                }
+            });
+    }
+
+    function updateStatus() {
+        fetch('/api/status')
+            .then(res => res.json())
+            .then(data => {
+                // Update specific metrics
+                document.getElementById('totalAvailable').textContent = data.total_available || 0;
+                document.getElementById('totalRecords').textContent = data.total_records || 0;
+                document.getElementById('currentDistrict').textContent = data.current_district || '-';
+                document.getElementById('currentSchool').textContent = data.current_school || '-';
+
+                // Update Main Status Label
+                const statusLabel = document.getElementById('mainStatusLabel');
+                if (data.error) {
+                    statusLabel.textContent = "Error";
+                    statusLabel.style.color = "var(--error)";
+                } else if (!data.is_running && data.progress === 100) {
+                    statusLabel.textContent = "Completed";
+                    statusLabel.style.color = "var(--success)";
+                } else {
+                    statusLabel.textContent = "Processing";
+                    statusLabel.style.color = "var(--accent)";
+                }
+
+                const progress = data.progress || 0;
+                document.getElementById('progressFill').style.width = progress + '%';
+                document.getElementById('progressText').textContent = progress + '%';
+
+                if (!data.is_running && data.message.includes('completed')) {
+                    onComplete();
+                }
+            });
+    }
+
+    function onComplete() {
+        clearInterval(statusInterval);
+        document.getElementById('downloadSection').style.display = 'block';
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('statusMessage').textContent = "Extraction Completed Successfully";
+        document.getElementById('progressFill').style.backgroundColor = "var(--success)";
+    }
+
+    function stopScraping() {
+        fetch('/api/stop', { method: 'POST' })
+            .then(() => {
+                // UI will update on next poll or we can force it
+            });
+    }
+
+    function resetUI() {
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+    }
+
+    // Check session status on load
+    document.addEventListener('DOMContentLoaded', () => {
+        fetch('/api/status')
+            .then(res => res.json())
+            .then(data => {
+                // If running or finished but not reset, restore state
+                if (data.is_running || (data.total_records > 0 && !data.error)) {
+                    // Restore UI State
+                    const stateSelect = document.getElementById('stateSelect');
+                    if (stateSelect && data.current_state) {
+                        // Attempt to pre-select state if we could match ID (optional)
+                    }
+
+                    document.getElementById('statusPanel').style.display = 'block';
+                    document.getElementById('statusPanel').scrollIntoView();
+
+                    if (data.is_running) {
+                        document.getElementById('startBtn').disabled = true;
+                        document.getElementById('stopBtn').disabled = false;
+                        document.getElementById('downloadSection').style.display = 'none';
+                        if (!statusInterval) {
+                            statusInterval = setInterval(updateStatus, 1000);
+                        }
+                    } else if (data.message && data.message.includes('completed')) {
+                        onComplete();
+                    }
+
+                    // Trigger one immediate update to fill values
+                    updateStatus();
+                }
+            });
+    });
+</script>
+{% endblock %}

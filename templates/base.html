@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}INSPIRE Scraper{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar">
+        <a href="/" class="brand">
+            <i class="fas fa-spider"></i>
+            INSPIRE Scraper
+        </a>
+
+        <div class="nav-links">
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">Home</a>
+            <a href="/scraper" class="nav-link {% if request.path == '/scraper' %}active{% endif %}">Scraper</a>
+            <a href="/docs" class="nav-link {% if request.path == '/docs' %}active{% endif %}">Documentation</a>
+
+            <a href="https://github.com" target="_blank" class="github-btn">
+                <i class="fab fa-github"></i>
+                <span>GitHub</span>
+            </a>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2025 INSPIRE Scraper Project. Open Source Software.</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

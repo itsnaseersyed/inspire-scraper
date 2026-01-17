@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Documentation - INSPIRE Scraper{% endblock %}
+
+{% block content %}
+<div class="docs-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="docs-sidebar">
+        <nav class="docs-nav" id="docsNav">
+            <a href="#introduction" class="active">Introduction</a>
+            <a href="#installation">Installation</a>
+            <a href="#usage">Usage</a>
+            <a href="#api-reference">API Reference</a>
+            <a href="#troubleshooting">Troubleshooting</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="docs-content">
+        <!-- Introduction -->
+        <section id="introduction" class="docs-section">
+            <h2>Introduction</h2>
+            <p>
+                The <strong>INSPIRE Scraper</strong> is a specialized tool designed to automate the extraction of school
+                contact details from the <a href="https://www.inspireawards-dst.gov.in/" target="_blank"
+                    style="color: var(--accent);">INSPIRE Awards</a> public portal. It provides a robust, user-friendly
+                interface for researchers and educational bodies to gather data efficiently.
+            </p>
+            <div class="message-box info active" style="text-align: left;">
+                <i class="fas fa-info-circle"></i>
+                Note: This tool is intended for educational and research purposes only. Please respect the target
+                website's rate limits and terms of service.
+            </div>
+        </section>
+
+        <!-- Installation -->
+        <section id="installation" class="docs-section">
+            <h2>Installation</h2>
+            <p>Getting started is easy with our automated setup script.</p>
+
+            <h3>Prerequisites</h3>
+            <ul style="padding-left: 1.5rem; margin-bottom: 1rem; color: var(--text-muted);">
+                <li>Windows 10 or 11</li>
+                <li>Internet connection for initial setup</li>
+            </ul>
+
+            <h3>One-Click Setup</h3>
+            <p>Simply run the batch file included in the root directory:</p>
+            <div class="code-block">
+                e:\DOCUMENTS\SCRAP\RUN.bat
+            </div>
+            <p>This script will automatically:</p>
+            <ol style="padding-left: 1.5rem; color: var(--text-muted);">
+                <li>Check for Python 3.9+ (and install if missing)</li>
+                <li>Create a virtual environment (optional but recommended)</li>
+                <li>Install required dependencies from <span class="inline-code">requirements.txt</span></li>
+                <li>Launch the application</li>
+            </ol>
+        </section>
+
+        <!-- Usage -->
+        <section id="usage" class="docs-section">
+            <h2>Usage Guide</h2>
+
+            <h3>1. Select Location</h3>
+            <p>
+                Navigate to the <strong>Scraper</strong> tab. Select your target <strong>State</strong> from the
+                dropdown menu. The application will automatically fetch the available districts.
+            </p>
+
+            <h3>2. Configure Scope</h3>
+            <p>
+                Select specific districts or use the <strong>Select All</strong> checkbox to scrape the entire state.
+            </p>
+
+            <h3>3. Start Extraction</h3>
+            <p>
+                Click the <span class="inline-code">Start Extraction</span> button. You can monitor progress in
+                real-time via the status panel.
+            </p>
+
+            <h3>4. Export Data</h3>
+            <p>
+                Once completed, a <span class="inline-code">Download Result</span> button will appear. The data is saved
+                as a CSV file in the <span class="inline-code">output/</span> directory.
+            </p>
+        </section>
+
+        <!-- API Reference -->
+        <section id="api-reference" class="docs-section">
+            <h2>API Reference</h2>
+            <p>The application exposes several local endpoints that can be used for custom integrations.</p>
+
+            <h3>Get States</h3>
+            <div class="code-block">GET /api/states</div>
+            <p>Returns a JSON object of all available states.</p>
+
+            <h3>Get Districts</h3>
+            <div class="code-block">GET /api/districts/&lt;state_id&gt;</div>
+            <p>Returns key-value pairs of districts for the given state ID.</p>
+
+            <h3>Start Scraping</h3>
+            <div class="code-block">POST /api/start</div>
+            <p>Payload:</p>
+            <div class="code-block">
+                {
+                "state_id": "1",
+                "districts": ["101", "102"] // or ["all"]
+                }
+            </div>
+        </section>
+
+        <!-- Troubleshooting -->
+        <section id="troubleshooting" class="docs-section">
+            <h2>Troubleshooting</h2>
+
+            <h3>Port Conflict</h3>
+            <p>
+                If you see an error about Port 5000 being in use, the <span class="inline-code">RUN.bat</span> script
+                will automatically offer to kill the existing process.
+            </p>
+
+            <h3>Scraping Fails Midway</h3>
+            <p>
+                The scraper has built-in retry logic. If a network error occurs, it will retry 3 times before skipping
+                the specific record. Check the <span class="inline-code">output/scraper.log</span> file for detailed
+                error traces.
+            </p>
+        </section>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Smooth scrolling and active link highlighting
+    document.querySelectorAll('.docs-nav a').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            document.querySelector(targetId).scrollIntoView({
+                behavior: 'smooth'
+            });
+
+            // Update active state
+            document.querySelectorAll('.docs-nav a').forEach(a => a.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+
+    // ScrollSpy
+    window.addEventListener('scroll', () => {
+        const sections = document.querySelectorAll('.docs-section');
+        let current = '';
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            if (pageYOffset >= sectionTop - 150) {
+                current = section.getAttribute('id');
+            }
+        });
+
+        document.querySelectorAll('.docs-nav a').forEach(a => {
+            a.classList.remove('active');
+            if (a.getAttribute('href') === '#' + current) {
+                a.classList.add('active');
+            }
+        });
+    });
+</script>
+{% endblock %}
